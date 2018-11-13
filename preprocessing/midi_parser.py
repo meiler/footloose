@@ -31,7 +31,7 @@ def get_notes(track):
 
 
 def get_messages_with_note(track, note):
-    return [mes for mes in track if mes.type == 'note_on' and mes.note == 60]
+    return [mes for mes in track if mes.type == 'note_on' and mes.note == note]
 
 
 def convert_to_array(track, tick_size, total_ticks):
