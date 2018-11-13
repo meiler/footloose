@@ -22,7 +22,7 @@ def detect_instruments(track):
         return 'harmony'
 
     if is_lead(track):
-        return 'lead'
+        return 'trumpet'
     return 'other'
 
 
@@ -72,11 +72,37 @@ def get_total_ticks(file, tick_size):
     return int(np.ceil(file.length / (tempo / 1000000)))
 
 
-def convert_midi_file(filename, detect_instrument=None):
+def split_to_instruments(array_tracks):
+    # split and apply `and` within instrument groups
+    instruments = {}
+    for i, track in enumerate(array_tracks):
+        if i == 9:
+            instrument = 'drum'
+        else:
+            instrument = detect_instruments(track)
+
+        # gather instruments together
+        if instrument not in instruments:
+            instruments[instrument] = []
+        instruments[instrument].append(track)
+
+    # harmony should be summed, for everything else we pick the most present channel
+    drums = instruments['drum'][np.argmax(map(np.sum, instruments['drum']))]
+    bass = instruments['bass'][np.argmax(map(np.sum, instruments['bass']))]
+    harmony = sum(instruments['harmony'], np.zeros(instruments['harmony'][0].shape)).astype(np.int8)
+    trumpets = instruments['trumpet'][np.argmax(map(np.sum, instruments['trumpet']))]
+
+    return np.array([drums,
+                     bass,
+                     harmony,
+                     trumpets
+                     ])
+
+
+def convert_midi_file(filename):
     """Convert a midi file into the trainable numpy tensor
 
     :param filename: Name of file to read
-    :param detect_instrument: function to evaluate the instrument of a channel
     :return: A numpy tensor with: time x pitch x instruments
     """
     file = mido.MidiFile(filename)
@@ -85,13 +111,4 @@ def convert_midi_file(filename, detect_instrument=None):
 
     array_tracks = [convert_to_array(track, tick_size, total_ticks) for track in file.tracks]
 
-    # split and apply `and` within instrument groups
-    instruments = {}
-    if not detect_instrument:
-        detect_instrument = dict(zip(range(len(tracks)), tracks))
-
-    for track in tracks:
-        instrument = detect_instrument(track)
-        if instrument not in instruments:
-            instruments[instrument] = []
-        instrument[instrument].append(track)
+    return split_to_instruments(array_tracks)
