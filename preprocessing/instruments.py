@@ -16,7 +16,7 @@ def is_harmony(track):
     """ Checks if it mostly plays several pitch at a time.
     """
     instrument_present = [nodes for nodes in track.sum(axis=1) if nodes > 0]
-    harmonies = [nodes for nodes in instrument_present.sum(axis=1) if nodes > 1]
+    harmonies = [nodes for nodes in instrument_present if nodes > 1]
 
     harmony_percentage = len(harmonies) / len(instrument_present)
 
@@ -33,7 +33,7 @@ def is_lead(track):
     """ Checks if it mostly plays one pitch at a time and the average pitch is high.
     """
     instrument_present = [nodes for nodes in track.sum(axis=1) if nodes > 0]
-    harmonies = [nodes for nodes in instrument_present.sum(axis=1) if nodes > 1]
+    harmonies = [nodes for nodes in instrument_present if nodes > 1]
 
     harmony_percentage = len(harmonies) / len(instrument_present)
 
@@ -43,3 +43,24 @@ def is_lead(track):
         return False
     else:
         return True
+
+
+
+
+
+matrix_a = np.array([[ 0.,  1,  0.,  0.,  0.],
+       [ 0.,  1.,  1,  1,  0.],
+       [ 0.,  0.,  1,  1.,  0.]])
+
+
+#playes nodes at the same time
+print(is_bass(matrix_a) == False)
+print(is_harmony(matrix_a) == False)
+print(is_lead(matrix_a) == False)
+
+
+
+
+    
+
+
