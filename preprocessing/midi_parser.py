@@ -6,17 +6,24 @@ The output tensor should contain: time (midi ticks) x pitch (127) x instruments
 """
 import numpy as np
 import mido
+from .instruments import is_drums, is_bass, is_harmony, is_lead
 
 
-def detect_instruments():
+def detect_instruments(track):
     """This should be based on what Simon described,
     some basic logic for pitches"""
-    pass
+    if is_drums(track):
+        return 'drums'
 
+    if is_bass(track):
+        return 'bass'
 
-def get_track_messages(mid_file):
-    """split a midi file into list of note_on/note_off for each channel"""
-    pass
+    if is_harmony(track):
+        return 'harmony'
+
+    if is_lead(track):
+        return 'lead'
+    return 'other'
 
 
 def get_notes(track):
@@ -75,7 +82,8 @@ def convert_midi_file(filename, detect_instrument=None):
     file = mido.MidiFile(filename)
     tick_size = get_tick_size(file)
     total_ticks = get_total_ticks(file, tick_size)
-    tracks = get_track_messages(file)
+
+    array_tracks = [convert_to_array(track, tick_size, total_ticks) for track in file.tracks]
 
     # split and apply `and` within instrument groups
     instruments = {}
@@ -87,5 +95,3 @@ def convert_midi_file(filename, detect_instrument=None):
         if instrument not in instruments:
             instruments[instrument] = []
         instrument[instrument].append(track)
-
-    midi_arrays = [convert_to_array(track, tick_size, total_ticks) for track in tracks]
