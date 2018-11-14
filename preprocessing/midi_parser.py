@@ -27,8 +27,21 @@ def get_notes(track):
     return set([mes.note for mes in track if mes.type == 'note_on'])
 
 
+def get_messages(track):
+    for mes in track:
+        if mes.type == 'note_on':
+            yield mes
+
+
 def get_messages_with_note(track, note):
-    return [mes for mes in track if mes.type == 'note_on' and mes.note == note]
+    return [mes for mes in get_messages(track) if mes.note == note]
+
+
+def get_channel(track):
+    for mes in get_messages(track):
+        if 'channel' in mes.dict():
+            return mes.channel
+    return None
 
 
 def convert_to_array(track, tick_size, total_ticks):
@@ -72,8 +85,8 @@ def get_total_ticks(file, tick_size):
 def split_to_instruments(array_tracks):
     # split and apply `and` within instrument groups
     instruments = {}
-    for i, track in enumerate(array_tracks):
-        if i == 9:
+    for i, track in array_tracks.items():
+        if i == 10:
             instrument = 'drum'
         else:
             instrument = detect_instruments(track)
@@ -112,6 +125,9 @@ def convert_midi_file(filename):
     tick_size = get_tick_size(file)
     total_ticks = get_total_ticks(file, tick_size)
 
-    array_tracks = [convert_to_array(track, tick_size, total_ticks) for track in file.tracks]
+    array_tracks = {
+        get_channel(track): convert_to_array(track, tick_size, total_ticks)
+        for track in file.tracks
+    }
 
     return split_to_instruments(array_tracks)
