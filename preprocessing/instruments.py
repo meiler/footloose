@@ -1,4 +1,5 @@
 # 4_instruments.py
+import numpy as np
 
 
 def is_bass(track):
@@ -43,24 +44,3 @@ def is_lead(track):
         return False
     else:
         return True
-
-
-
-
-
-matrix_a = np.array([[ 0.,  1,  0.,  0.,  0.],
-       [ 0.,  1.,  1,  1,  0.],
-       [ 0.,  0.,  1,  1.,  0.]])
-
-
-#playes nodes at the same time
-print(is_bass(matrix_a) == False)
-print(is_harmony(matrix_a) == False)
-print(is_lead(matrix_a) == False)
-
-
-
-
-    
-
-

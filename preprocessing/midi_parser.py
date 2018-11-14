@@ -6,15 +6,12 @@ The output tensor should contain: time (midi ticks) x pitch (127) x instruments
 """
 import numpy as np
 import mido
-from .instruments import is_drums, is_bass, is_harmony, is_lead
+from .instruments import is_bass, is_harmony, is_lead
 
 
 def detect_instruments(track):
     """This should be based on what Simon described,
     some basic logic for pitches"""
-    if is_drums(track):
-        return 'drums'
-
     if is_bass(track):
         return 'bass'
 
@@ -36,7 +33,7 @@ def get_messages_with_note(track, note):
 
 def convert_to_array(track, tick_size, total_ticks):
     """Create an array for one instrument; time x pitch"""
-    output_array = np.zeros((total_ticks, 127))
+    output_array = np.zeros((total_ticks, 128))
 
     notes = get_notes(track)
 
@@ -81,10 +78,16 @@ def split_to_instruments(array_tracks):
         else:
             instrument = detect_instruments(track)
 
+        if instrument == 'other':
+            continue
+
         # gather instruments together
         if instrument not in instruments:
             instruments[instrument] = []
         instruments[instrument].append(track)
+
+    if len(instruments.keys()) < 4:
+        return None
 
     # harmony should be summed, for everything else we pick the most present channel
     drums = instruments['drum'][np.argmax(map(np.sum, instruments['drum']))]
