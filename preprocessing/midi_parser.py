@@ -82,39 +82,6 @@ def get_total_ticks(file, tick_size):
     return int(np.ceil(file.length / (tempo / 1000000)))
 
 
-def split_to_instruments(array_tracks):
-    # split and apply `and` within instrument groups
-    instruments = {}
-    for i, track in array_tracks.items():
-        if i == 10:
-            instrument = 'drum'
-        else:
-            instrument = detect_instruments(track)
-
-        if instrument == 'other':
-            continue
-
-        # gather instruments together
-        if instrument not in instruments:
-            instruments[instrument] = []
-        instruments[instrument].append(track)
-
-    if len(instruments.keys()) < 4:
-        return None
-
-    # harmony should be summed, for everything else we pick the most present channel
-    drums = instruments['drum'][np.argmax(map(np.sum, instruments['drum']))]
-    bass = instruments['bass'][np.argmax(map(np.sum, instruments['bass']))]
-    harmony = sum(instruments['harmony'], np.zeros(instruments['harmony'][0].shape)).astype(np.int8)
-    trumpets = instruments['trumpet'][np.argmax(map(np.sum, instruments['trumpet']))]
-
-    return np.array([drums,
-                     bass,
-                     harmony,
-                     trumpets
-                     ])
-
-
 def convert_midi_file(filename, split_to_instruments=False):
     """Convert a midi file into the trainable numpy tensor
 
@@ -130,6 +97,4 @@ def convert_midi_file(filename, split_to_instruments=False):
         for track in file.tracks
     }
 
-    if split_to_instruments:
-        return split_to_instruments(array_tracks)
     return array_tracks
