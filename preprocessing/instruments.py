@@ -49,7 +49,7 @@ def extract_instruments(midi_track):
     # split and apply `and` within instrument groups
     instruments = {}
     for i, track in array_tracks.items():
-        if i == 10:
+        if i == 9:  # mido starts at channel 0
             instrument = 'drum'
         else:
             instrument = detect_instruments(track)
