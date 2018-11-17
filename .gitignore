@@ -1,3 +1,8 @@
+*.mid
+*.png
+*.mp4
+*.jpg
+
 .virtualenv
 *.h5
 

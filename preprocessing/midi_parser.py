@@ -115,7 +115,7 @@ def split_to_instruments(array_tracks):
                      ])
 
 
-def convert_midi_file(filename):
+def convert_midi_file(filename, split_to_instruments=False):
     """Convert a midi file into the trainable numpy tensor
 
     :param filename: Name of file to read
@@ -130,4 +130,6 @@ def convert_midi_file(filename):
         for track in file.tracks
     }
 
-    return split_to_instruments(array_tracks)
+    if split_to_instruments:
+        return split_to_instruments(array_tracks)
+    return array_tracks
