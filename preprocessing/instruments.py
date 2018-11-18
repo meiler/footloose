@@ -8,7 +8,7 @@ def is_bass(track):
     if any(track.sum(axis=1) > 1):
         return False
     elif np.average(np.nonzero(track)[0]) > 47:
-        return False #if the average pitch is below 47, then it may be the bass
+        return False  # if the average pitch is below 47, then it may be the bass
     else:
         return True
 
@@ -21,11 +21,10 @@ def is_harmony(track):
 
     harmony_percentage = len(harmonies) / len(instrument_present)
 
-    if harmony_percentage < 0.9: # often (90 percent) two nodes at the same time        
+    if harmony_percentage < 0.9:  # often (90 percent) two nodes at the same time
         return False
     else:
         return True
-    
 
 
 def is_lead(track):
@@ -38,9 +37,42 @@ def is_lead(track):
 
     harmony_percentage = len(harmonies) / len(instrument_present)
 
-    if harmony_percentage > 0.1 : # often (90 percent) two nodes at the same time        
+    if harmony_percentage > 0.1:  # often (90 percent) two nodes at the same time
         return False
     elif np.average(np.nonzero(track)[0]) < 47:
         return False
     else:
         return True
+
+
+def extract_instruments(midi_track):
+    # split and apply `and` within instrument groups
+    instruments = {}
+    for i, track in array_tracks.items():
+        if i == 9:  # mido starts at channel 0
+            instrument = 'drum'
+        else:
+            instrument = detect_instruments(track)
+
+        if instrument == 'other':
+            continue
+
+        # gather instruments together
+        if instrument not in instruments:
+            instruments[instrument] = []
+        instruments[instrument].append(track)
+
+    if len(instruments.keys()) < 4:
+        return None
+
+    # harmony should be summed, for everything else we pick the most present channel
+    drums = instruments['drum'][np.argmax(map(np.sum, instruments['drum']))]
+    bass = instruments['bass'][np.argmax(map(np.sum, instruments['bass']))]
+    harmony = sum(instruments['harmony'], np.zeros(instruments['harmony'][0].shape)).astype(np.int8)
+    trumpets = instruments['trumpet'][np.argmax(map(np.sum, instruments['trumpet']))]
+
+    return {'drums': drums,
+            'bass': bass,
+            'harmony': harmony,
+            'trumpets': trumpets,
+            }
