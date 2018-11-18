@@ -1,4 +1,15 @@
+*.mid
+*.png
+*.mp4
+*.jpg
+
+.DS_Store
+
+# Folders from project
+data/ 
+
 .virtualenv
+*.h5
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
