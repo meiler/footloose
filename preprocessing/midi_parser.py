@@ -5,22 +5,8 @@ The output tensor should contain: time (midi ticks) x pitch (127) x instruments
 
 """
 import numpy as np
+from scipy import sparse
 import mido
-from .instruments import is_bass, is_harmony, is_lead
-
-
-def detect_instruments(track):
-    """This should be based on what Simon described,
-    some basic logic for pitches"""
-    if is_bass(track):
-        return 'bass'
-
-    if is_harmony(track):
-        return 'harmony'
-
-    if is_lead(track):
-        return 'trumpet'
-    return 'other'
 
 
 def get_notes(track):
@@ -29,7 +15,7 @@ def get_notes(track):
 
 def get_messages(track):
     for mes in track:
-        if mes.type == 'note_on':
+        if mes.type == 'note_on' or mes.type == 'note_off':
             yield mes
 
 
@@ -45,19 +31,18 @@ def get_channel(track):
 
 
 def convert_to_array(track, tick_size, total_ticks):
-    """Create an array for one instrument; time x pitch"""
-    output_array = np.zeros((total_ticks, 128))
+    output = np.zeros((total_ticks, 128), dtype=np.int8)
+    state = np.zeros(128, dtype=np.int8)
+    cur_time = 0
 
-    notes = get_notes(track)
+    for message in get_messages(track):
+        if message.time > 0:
+            output[cur_time:(cur_time + message.time // tick_size), :] = state
+            cur_time += message.time // tick_size
 
-    for note in notes:
-        time_now = 0
-        messages = get_messages_with_note(track, note)
-        for mes in messages:
-            time_now += mes.time // tick_size
-            output_array[time_now:, note] = 1 if mes.velocity > 0 else 0
+        state[message.note] = message.velocity > 0
 
-    return output_array
+    return output
 
 
 def get_tick_size(file):
@@ -79,7 +64,7 @@ def get_total_ticks(file, tick_size):
         print('Missing tempo, assuming 120 bmp')
         tempo = 500000
 
-    return int(np.ceil(file.length / (tempo / 1000000)))
+    return int(np.ceil(file.length / (tempo / 10000000)))
 
 
 def convert_midi_file(filename, split_to_instruments=False):
@@ -93,7 +78,7 @@ def convert_midi_file(filename, split_to_instruments=False):
     total_ticks = get_total_ticks(file, tick_size)
 
     array_tracks = {
-        get_channel(track): convert_to_array(track, tick_size, total_ticks)
+        get_channel(track): sparse.csr_matrix(convert_to_array(track, tick_size, total_ticks))
         for track in file.tracks
     }
 
