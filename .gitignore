@@ -1,3 +1,13 @@
+*.mid
+*.png
+*.mp4
+*.jpg
+
+.DS_Store
+
+# Folders from project
+data/ 
+
 .virtualenv
 *.h5
 
