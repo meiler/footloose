@@ -31,7 +31,7 @@ def turn_on(track, note, time):
 
 def get_track_from_array(array_track, tick_size=15, instrument=1):
     mid_track = mido.MidiTrack()
-    state = np.zeros(128)
+    state = np.zeros(128, dtype=np.int8)
     last_event = 0
 
     for time in range(len(array_track)):
