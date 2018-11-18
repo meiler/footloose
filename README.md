@@ -1,8 +1,6 @@
 # footloose
 
 
-
-
 ## Extract video and audio
 ```
 python dancevideos.py
@@ -13,3 +11,9 @@ python dancevideos.py
 - `pip install youtube_dl`
 
 
+## Running tests:
+Install `pytest`
+
+Run tests with:
+
+`python -m pytest tests`
