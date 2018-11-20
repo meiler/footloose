@@ -24,10 +24,8 @@ def get_messages_with_note(track, note):
 
 
 def get_channel(track):
-    # get second message in track - first message is usually a meta message.
-    mes = str(track[1])
-    # removes message type and converts to dict
-    trackdict = dict(item.split('=') for item in mes[1:].split(' ')[1:])
+    mes = str(track[1]) # get second message in track - first message is usually a meta message.
+    trackdict = dict(item.split('=') for item in mes[1:].split(' ')[1:]) # removes message type from string and converts to dict
     if "channel" in trackdict:
         return trackdict["channel"]
     else:
@@ -35,10 +33,10 @@ def get_channel(track):
 
 
 def get_program(track):
-    mes = str(track[1])
-    trackdict = dict(item.split('=') for item in mes[1:].split(' ')[1:])
+    mes = str(track[1]) # get second message in track - first message is usually a meta message.
+    trackdict = dict(item.split('=') for item in mes[1:].split(' ')[1:]) # removes message type from string and converts to dict
     if "program" in trackdict:
-        return trackdict["program"]
+        return int(trackdict["program"])
     else:
         return None
 
@@ -75,11 +73,36 @@ def get_total_ticks(file, tick_size):
     if tempo:
         tempo = tempo[0].tempo
     else:
-        print('Missing tempo, assuming 120 bmp')
+        print('Missing tempo, assuming 120 bpm')
         tempo = 500000
 
     return int(np.ceil(file.length / (tempo / 10000000)))
 
+def get_name(file):
+    if file.tracks[0][0].is_meta:
+        mes = str(file.tracks[0][0])
+        if len(mes.split('\'')) == 3:
+            return mes.split('\'')[1]
+    else:
+        return "Unknown"
+
+
+# we should ensure drums are in fact on channel 10 as assumed
+def get_drumtracks(file):
+    drumtracks = []
+    tracknumber = 1 # skip first track of midi file - it's a meta track.
+    for track in file.tracks[1:]:
+        if get_program(track) in range(112-119):
+            drumtracks.append(tracknumber)
+        elif len(drumtracks) == 0:
+            print("drumtrack of song " + get_name(file) + "only on track 10")
+            drumtracks.append(tracknumber)
+        tracknumber = tracknumber + 1
+    if len(drumtracks) == 0:
+            print("no drumtracks")
+            return None
+    else:
+        return drumtracks
 
 def convert_midi_file(filename, split_to_instruments=False):
     """Convert a midi file into the trainable numpy tensor
