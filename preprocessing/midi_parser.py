@@ -34,6 +34,15 @@ def get_channel(track):
         return None
 
 
+def get_program(track):
+    mes = str(track[1])
+    trackdict = dict(item.split('=') for item in mes[1:].split(' ')[1:])
+    if "program" in trackdict:
+        return trackdict["program"]
+    else:
+        return None
+
+
 def convert_to_array(track, tick_size, total_ticks):
     output = np.zeros((total_ticks, 128), dtype=np.int8)
     state = np.zeros(128, dtype=np.int8)
