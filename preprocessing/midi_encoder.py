@@ -11,6 +11,7 @@ import mido
 #from .instruments import is_bass, is_harmony, is_lead
 from preprocessing.midi_parser import convert_midi_file
 from mido import Message, MidiFile, MidiTrack
+import scipy
 
 
 def get_off_notes(old_state, new_state):
@@ -63,3 +64,12 @@ def convert_tensor_to_midi(array_tracks, filename):
         mid.tracks.append(mid_track)
 
     mid.save(filename)
+
+
+def read_np_file(filename):
+    np_arrays = np.load(filename)
+
+    np_arrays = {key: (np.asarray(value.todense()) if isinstance(value, scipy.sparse.csr.csr_matrix) else value)
+                 for (key, value) in np_arrays.tolist().items()}
+
+    return np_arrays
