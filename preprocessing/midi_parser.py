@@ -27,7 +27,7 @@ def get_channel(track):
     mes = str(track[1]) # get second message in track - first message is usually a meta message.
     trackdict = dict(item.split('=') for item in mes[1:].split(' ')[1:]) # removes message type from string and converts to dict
     if "channel" in trackdict:
-        return trackdict["channel"]
+        return int(trackdict["channel"])
     else:
         return None
 
@@ -90,19 +90,22 @@ def get_name(file):
 # we should ensure drums are in fact on channel 10 as assumed
 def get_drumtracks(file):
     drumtracks = []
-    tracknumber = 1 # skip first track of midi file - it's a meta track.
+    tracknumber = 1
+
     for track in file.tracks[1:]:
-        if get_program(track) in range(112-119):
+        if get_program(track) in range(112, 122):
             drumtracks.append(tracknumber)
-        elif len(drumtracks) == 0:
-            print("drumtrack of song " + get_name(file) + "only on track 10")
+        if len(drumtracks) == 0 and get_channel(track) == 9:
+            print("drumtrack of " + get_name(file) + " on track 10")
             drumtracks.append(tracknumber)
-        tracknumber = tracknumber + 1
-    if len(drumtracks) == 0:
-            print("no drumtracks")
-            return None
+        tracknumber = tracknumber + 1 # skip first track of midi file - it's a meta track.
+
+    if len(drumtracks) != 0:
+            return drumtracks
     else:
-        return drumtracks
+        print(get_name(file) + " has no drumtracks")
+        return None
+
 
 def convert_midi_file(filename, split_to_instruments=False):
     """Convert a midi file into the trainable numpy tensor
