@@ -36,9 +36,10 @@ def convert_to_array(track, tick_size, total_ticks):
     cur_time = 0
 
     for message in get_messages(track):
-        if message.time > 0:
-            output[cur_time:(cur_time + message.time // tick_size), :] = state
-            cur_time += message.time // tick_size
+        time = int(message.time)
+        if time > 0:
+            output[cur_time:(cur_time + time // tick_size), :] = state
+            cur_time += time // tick_size
 
         state[message.note] = message.velocity > 0
 
@@ -53,7 +54,7 @@ def get_tick_size(file):
         print('Missing time signature, assuming 4')
         notated_32 = 4
 
-    return file.ticks_per_beat // notated_32
+    return int(file.ticks_per_beat // notated_32)
 
 
 def get_total_ticks(file, tick_size):
