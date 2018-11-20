@@ -24,10 +24,14 @@ def get_messages_with_note(track, note):
 
 
 def get_channel(track):
-    for mes in get_messages(track):
-        if 'channel' in mes.dict():
-            return mes.channel
-    return None
+    # get second message in track - first message is usually a meta message.
+    mes = str(track[1])
+    # removes message type and converts to dict
+    trackdict = dict(item.split('=') for item in mes[1:].split(' ')[1:])
+    if "channel" in trackdict:
+        return trackdict["channel"]
+    else:
+        return None
 
 
 def convert_to_array(track, tick_size, total_ticks):
