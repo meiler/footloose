@@ -59,8 +59,8 @@ def convert_tensor_to_midi(array_tracks, suffix, instrument = 1):
     mid = MidiFile()
 
     # get these right at some point. maybe read from a filename where it should be encoded? split by " - "
-    artist = "britney"
-    title = "one more time"
+    # artist = "britney"
+    # title = "one more time"
 
     # append meta track 0
     mid.tracks[0].append(MetaMessage('midi_port', 'port=0', 'time=0'))
