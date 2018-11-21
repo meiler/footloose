@@ -1,5 +1,6 @@
 # 4_instruments.py
 import numpy as np
+import scipy
 
 
 def is_drums(nptrack):
