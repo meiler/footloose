@@ -56,10 +56,10 @@ def get_track_from_array(array_track, tick_size=15, instrument=1):
     return mid_track
 
 
-def convert_tensor_to_midi(array_tracks, filename, instrument = 1):
+def convert_tensor_to_midi(array_tracks, suffix, instrument = 1):
     mid = MidiFile()
 
-    # get these right at some point. maybe read from filename where it should be encoded? split by " - "
+    # get these right at some point. maybe read from a filename where it should be encoded? split by " - "
     artist = "britney"
     title = "one more time"
 
@@ -88,7 +88,7 @@ def convert_tensor_to_midi(array_tracks, filename, instrument = 1):
         mid.tracks[track].append(mid_track)
         track = track + 1
 
-    mid.save(filename)
+    mid.save(artist + " " + title + suffix)
 
 
 def read_np_file(filename):
