@@ -56,12 +56,37 @@ def get_track_from_array(array_track, tick_size=15, instrument=1):
     return mid_track
 
 
-def convert_tensor_to_midi(array_tracks, filename):
+def convert_tensor_to_midi(array_tracks, filename, instrument = 1):
     mid = MidiFile()
+
+    # get these right at some point. maybe read from filename where it should be encoded? split by " - "
+    artist = "britney"
+    title = "one more time"
+
+    # append meta track 0
+    mid.tracks[0].append(Message('meta message', 'track_name', artist, 'time=0'))
+    mid.tracks[0].append(Message('meta message', 'track_name', title, 'time=0'))
+    mid.tracks[0].append(Message('meta message', 'time_signature', 'numerator=4', 'denominator=4', 'clocks_per_click=24', 'notated_32nd_notes_per_beat=8', 'time=0'))
+    mid.tracks[0].append(Message('meta message', 'set_tempo', 'tempo=' + str(tempo), 'time=0'))
 
     for channel in array_tracks:
         mid_track = get_track_from_array(array_tracks[channel])
-        mid.tracks.append(mid_track)
+        track = 1
+        mid.tracks[track].append(Message('meta message', 'midi_port', 'port=0', 'time=0')) # track header
+
+        if instrument == 1:
+            if is_lead(mid_track):
+                mid.tracks[track].append(Message('program_change', channel=channel, program=74, time=0))  # 74 is flute
+            elif is_bass(mid_track):
+                mid.tracks[track].append(Message('program_change', channel=channel, program=34, time=0))  # 34 is bass
+            elif is_harmony(mid_track):
+                mid.tracks[track].append(Message('program_change', channel=channel, program=1, time=0))  # 1 is piano
+            elif is_drums(mid_track):
+                mid.tracks[track].append(Message('control_change', channel=9, control=10, value=64, time=0)) # channel 9 is always drums
+                # how britney.mid sets the drums but I think it's unnecessary. IIRC control=10 is pan adjustment, 64 centers it.
+
+        mid.tracks[track].append(mid_track)
+        track = track + 1
 
     mid.save(filename)
 
