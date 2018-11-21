@@ -78,11 +78,13 @@ def get_total_ticks(file, tick_size):
 
     return int(np.ceil(file.length / (tempo / 10000000)))
 
+
 def get_name(file):
     if file.tracks[0][0].is_meta:
-        mes = str(file.tracks[0][0])
-        if len(mes.split('\'')) == 3:
-            return mes.split('\'')[1]
+        mes0 = str(file.tracks[0][0])
+        mes1 = str(file.tracks[0][1])
+        if len(mes0.split('\'')) == 3:
+            return mes1.split('\'')[1]+" - "+mes0.split('\'')[1]
     else:
         return "Unknown"
 
@@ -119,7 +121,7 @@ def convert_midi_file(filename, split_to_instruments=False):
 
     array_tracks = {
         get_channel(track): sparse.csr_matrix(convert_to_array(track, tick_size, total_ticks))
-        for track in file.tracks
+        for track in file.tracks[1:] # skip identifier track
     }
 
     return array_tracks
