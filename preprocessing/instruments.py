@@ -5,7 +5,6 @@
 import numpy as np
 from scipy import sparse
 from preprocessing.midi_encoder import read_np_file
-from preprocessing.midi_parser import encode_metadata
 
 
 """ Dictionary:
@@ -122,9 +121,18 @@ def encode_drums(array_tracks):  # hopefully finds out if there are multiple dru
 
     return out_array
 
-def extract_instruments(filename):
+
+def process_array(array_tracks):
+    out_array = {'tracks' = {}, 'meta' = array_tracks['meta']}
+    out_array.append(encode_lead(array_tracks) + encode_harmony(array_tracks) + encode_bass(array_tracks)\
+                + encode_drums(array_tracks))
+    return out_array
+
+
+def process_to_file(filename):
     array_tracks = read_np_file(filename)
-    out_array = encode_lead(array_tracks) + encode_harmony(array_tracks) + encode_bass(array_tracks)\
-                + encode_drums(array_tracks) + encode_metadata(array_tracks)
+    out_array = {'tracks' = {}, 'meta' = array_tracks['meta']}
+    out_array.append(encode_lead(array_tracks) + encode_harmony(array_tracks) + encode_bass(array_tracks)\
+                + encode_drums(array_tracks))
 
     np.save(filename, sparse.csr_matrix(out_array))
