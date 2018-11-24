@@ -8,9 +8,8 @@ The input tensor should contain: time (midi ticks) x pitch (127) x instruments
 """
 import numpy as np
 import mido
-from preprocessing.instruments import is_bass, is_harmony, is_lead, is_drums
-from mido import Message, MidiFile, MetaMessage, MidiTrack
-from scipy import sparse
+from preprocessing.midi_parser import convert_midi_file
+from mido import Message, MidiFile, MidiTrack
 
 
 def get_off_notes(old_state, new_state):
@@ -29,8 +28,17 @@ def turn_on(track, note, time):
     track.append(Message('note_on', note=note, velocity=100, time=time))
 
 
-def get_track_from_array(array_track, tick_size=15, instrument=1):
+def set_program(track, channel, program):
+    if program is not None:
+        track.append(Message('program_change', channel=int(channel), program=int(program), time=0))
+    else:
+        track.append(Message('program_change', channel=int(channel), time=0))
+
+
+def get_track_from_array(array_track, tick_size, channel, program):
     mid_track = mido.MidiTrack()
+    set_program(mid_track, channel, program)
+
     state = np.zeros(128, dtype=np.int8)
     last_event = 0
 
@@ -55,53 +63,37 @@ def get_track_from_array(array_track, tick_size=15, instrument=1):
     return mid_track
 
 
-def convert_tensor_to_midi(array_tracks, suffix, instrument=1):
-    mid = MidiFile(type=1)
-    track = MidiTrack()
-    mid.tracks.append(track)
+def get_midi_file_header(meta):
+    mid_track = mido.MidiTrack()
+    mid_track.append(mido.MetaMessage('midi_port', port=0, time=0))
+    mid_track.append(mido.MetaMessage('track_name', name='ladebandet', time=0))
+    mid_track.append(mido.MetaMessage('time_signature', numerator=4, denominator=4,
+                                      clocks_per_click=24, notated_32nd_notes_per_beat=meta['notated_32'],
+                                      time=0))
+    mid_track.append(mido.MetaMessage('set_tempo', tempo=meta['tempo'], time=0))
+    return mid_track
 
-    # get these right at some point. maybe read from a filename where it should be encoded? split by " - "
-    artist = array_tracks[meta][artist]
-    title = "one more time"
-    tempo = 546000
 
-    # append meta track 0
-    mid.tracks[0].append(MetaMessage('midi_port', port=0, time=0))
-    mid.tracks[0].append(MetaMessage('track_name', name=artist, time=0))
-    mid.tracks[0].append(MetaMessage('track_name', name=title, time=0))
-    mid.tracks[0].append(MetaMessage('time_signature', numerator=4, denominator=4, clocks_per_click=24,
-                                     notated_32nd_notes_per_beat=8, time=0))
-    mid.tracks[0].append(MetaMessage('set_tempo', tempo=int(tempo), time=0))
+def convert_tensor_to_midi(array_tracks, filename):
+    mid = MidiFile()
+    tracks = array_tracks['tracks']
+    meta = array_tracks['meta']
+    tick_size = meta['tick_size']
 
-    track = 1
-    for channel in array_tracks:
-        mid_track = get_track_from_array(array_tracks[channel])
-        mid.tracks[track].append(MetaMessage('midi_port', port=0, time=0)) # track header
+    mid.tracks.append(get_midi_file_header(meta))
 
-        if instrument == 1:
-            if is_lead(mid_track):
-                # 57 is trumpet!
-                mid.tracks[track].append(Message('program_change', channel=channel, program=57, time=0))
-            elif is_bass(mid_track):
-                # 34 is bass
-                mid.tracks[track].append(Message('program_change', channel=channel, program=34, time=0))
-            elif is_harmony(mid_track):
-                # 1 is piano
-                mid.tracks[track].append(Message('program_change', channel=channel, program=1, time=0))
-            elif is_drums(mid_track):
-                # channel 9 is always drums. (midi counts channels from 1 but mido counts from 0)
-                mid.tracks[track].append(Message('control_change', channel=9, control=10, value=64, time=0))
-                # how britney.mid sets drums. I think it's unnecessary. iirc ctrl=10 is pan adjustment, val=64 centers.
+    for channel, track in tracks.items():
+        if channel is not None:
+            mid_track = get_track_from_array(track, tick_size, channel, meta['program'][channel])
+            mid.tracks.append(mid_track)
 
-        mid.tracks[track].append(mid_track)
-        track = track + 1
-
-    mid.save(artist + " " + title + suffix)
+    mid.save(filename)
 
 
 def read_np_file(filename):
     np_arrays = np.load(filename)
-    np_arrays = {key: (np.asarray(value.todense()) if isinstance(value, sparse.csr.csr_matrix) else value)
-                 for (key, value) in np_arrays.tolist().items()}
+
+    np_arrays = np_arrays.tolist()
+    np_arrays['tracks'] = {key: np.asarray(value.todense()) for (key, value) in np_arrays['tracks'].items()}
 
     return np_arrays
