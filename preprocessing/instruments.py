@@ -75,7 +75,7 @@ def is_bass(nptrack):
 
 
 def encode_lead(array_tracks):  # finds the most likely lead track
-    out_array = {'tracks' = {}, 'meta' = array_tracks['meta']}
+    out_array = {'tracks': {}, 'meta': array_tracks['meta']}
     tracks = []
     for channel, track in array_tracks['tracks'].items():
         if is_lead(track):
@@ -87,7 +87,7 @@ def encode_lead(array_tracks):  # finds the most likely lead track
 
 
 def encode_harmony(array_tracks):  # combines harmony tracks
-    out_array = {'tracks' = {}, 'meta' = array_tracks['meta']}
+    out_array = {'tracks': {}, 'meta': array_tracks['meta']}
     tracks = []
     for channel, track in array_tracks['tracks'].items():
         if is_harmony(track):
@@ -99,7 +99,7 @@ def encode_harmony(array_tracks):  # combines harmony tracks
 
 
 def encode_bass(array_tracks):  # finds the most likely bass track
-    out_array = {'tracks' = {}, 'meta' = array_tracks['meta']}
+    out_array = {'tracks': {}, 'meta': array_tracks['meta']}
     tracks = []
     for channel, track in array_tracks['tracks'].items():
         if is_bass(track):
@@ -111,7 +111,7 @@ def encode_bass(array_tracks):  # finds the most likely bass track
 
 
 def encode_drums(array_tracks):  # hopefully finds out if there are multiple drum tracks or not.
-    out_array = {'tracks' = {}, 'meta' = array_tracks['meta']}
+    out_array = {'tracks': {}, 'meta': array_tracks['meta']}
     drumtracks = get_drumtracks(array_tracks)
     if len(drumtracks) > 1:
         drumtrack = sum([array_tracks['tracks'][track] for track in drumtracks])
@@ -123,7 +123,7 @@ def encode_drums(array_tracks):  # hopefully finds out if there are multiple dru
 
 
 def process_array(array_tracks):
-    out_array = {'tracks' = {}, 'meta' = array_tracks['meta']}
+    out_array = {'tracks': {}, 'meta': array_tracks['meta']}
     out_array.append(encode_lead(array_tracks) + encode_harmony(array_tracks) + encode_bass(array_tracks)\
                 + encode_drums(array_tracks))
     return out_array
@@ -131,7 +131,7 @@ def process_array(array_tracks):
 
 def process_to_file(filename):
     array_tracks = read_np_file(filename)
-    out_array = {'tracks' = {}, 'meta' = array_tracks['meta']}
+    out_array = {'tracks': {}, 'meta': array_tracks['meta']}
     out_array.append(encode_lead(array_tracks) + encode_harmony(array_tracks) + encode_bass(array_tracks)\
                 + encode_drums(array_tracks))
 
