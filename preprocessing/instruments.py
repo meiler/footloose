@@ -4,7 +4,6 @@
 
 import numpy as np
 from scipy import sparse
-from preprocessing.midi_encoder import read_np_file
 
 
 """ Dictionary:
@@ -39,7 +38,11 @@ def is_lead(nptrack):
     instrument_present = [nodes for nodes in nptrack.sum(axis=1) if nodes > 0]
     harmonies = [nodes for nodes in instrument_present if nodes > 1]
 
-    harmony_percentage = len(harmonies) / len(instrument_present)
+    if len(instrument_present) == 0:
+        return False
+
+    else:
+        harmony_percentage = len(harmonies) / len(instrument_present)
 
     if harmony_percentage > 0.1:  # often (90 percent) two nodes at the same time
         return False
@@ -55,84 +58,89 @@ def is_harmony(nptrack):
     instrument_present = [nodes for nodes in nptrack.sum(axis=1) if nodes > 0]
     harmonies = [nodes for nodes in instrument_present if nodes > 1]
 
-    harmony_percentage = len(harmonies) / len(instrument_present)
-
-    if harmony_percentage < 0.9:  # often (90 percent) two nodes at the same time
-        return False
-    else:
+    if instrument_present and (len(harmonies) / len(instrument_present)) > .9:
         return True
+    return False
 
 
 def is_bass(nptrack):
     """ Checks if it only plays on pitch at a time and the average pitch is deep.
     """
     if any(nptrack.sum(axis=1) > 1):
+        print("anynptrack.sum fail")
         return False
-    elif np.average(np.nonzero(nptrack)[0]) > 47:
+    elif np.average(np.nonzero(nptrack)[1]) > 47:
+        print("npaverage fail")
+        print("npaverage was " + str(np.average(np.nonzero(nptrack)[0])))
         return False  # if the average pitch is below 47, then it may be the bass
     else:
         return True
 
 
-def encode_lead(array_tracks):  # finds the most likely lead track
-    out_array = {'tracks': {}, 'meta': array_tracks['meta']}
+def encode_lead(out_array, array_tracks):  # finds the most likely lead track
     tracks = []
     for channel, track in array_tracks['tracks'].items():
         if is_lead(track):
             tracks.append(channel)
 
-    out_array['tracks'][0] = np.argmax([array_tracks['tracks'][track] for track in tracks])
+    best_track = np.argmax([array_tracks['tracks'][track].sum() for track in tracks])
+    out_array['tracks'][0] = array_tracks['tracks'][best_track]
     out_array['meta']['program'][0] = leadprogram
-    return out_array
 
 
-def encode_harmony(array_tracks):  # combines harmony tracks
-    out_array = {'tracks': {}, 'meta': array_tracks['meta']}
+def encode_harmony(out_array, array_tracks):  # combines harmony tracks
     tracks = []
     for channel, track in array_tracks['tracks'].items():
         if is_harmony(track):
             tracks.append(channel)
 
-    out_array['tracks'][1] = sum([array_tracks['tracks'][track] for track in tracks])
-    out_array['meta']['program'][1] = harmonyprogram
-    return out_array
+    if tracks:
+        out_array['tracks'][1] = sum([array_tracks['tracks'][track] for track in tracks])
+        out_array['meta']['program'][1] = harmonyprogram
 
 
-def encode_bass(array_tracks):  # finds the most likely bass track
-    out_array = {'tracks': {}, 'meta': array_tracks['meta']}
+def encode_bass(out_array, array_tracks):  # finds the most likely bass track
     tracks = []
     for channel, track in array_tracks['tracks'].items():
         if is_bass(track):
             tracks.append(channel)
 
-    out_array['tracks'][2] = np.argmax([array_tracks['tracks'][track] for track in tracks])
-    out_array['meta']['program'][2] = bassprogram
-    return out_array
+    if tracks:
+        best_track = np.argmax([array_tracks['tracks'][track].sum() for track in tracks])
+        out_array['tracks'][0] = array_tracks['tracks'][best_track]
+        out_array['meta']['program'][2] = bassprogram
 
 
-def encode_drums(array_tracks):  # hopefully finds out if there are multiple drum tracks or not.
-    out_array = {'tracks': {}, 'meta': array_tracks['meta']}
+def encode_drums(out_array, array_tracks):  # hopefully finds out if there are multiple drum tracks or not.
     drumtracks = get_drumtracks(array_tracks)
-    if len(drumtracks) > 1:
-        drumtrack = sum([array_tracks['tracks'][track] for track in drumtracks])
+    if drumtracks:
+        drumtracks = sum([array_tracks['tracks'][track] for track in drumtracks])
 
-    out_array['tracks'][9] = drumtrack
-    out_array['meta']['program'][9] = None
-
-    return out_array
+        out_array['tracks'][9] = drumtracks
+        out_array['meta']['program'][9] = None
 
 
 def process_array(array_tracks):
     out_array = {'tracks': {}, 'meta': array_tracks['meta']}
-    out_array.append(encode_lead(array_tracks) + encode_harmony(array_tracks) + encode_bass(array_tracks)\
-                + encode_drums(array_tracks))
+
+    encode_lead(out_array, array_tracks)
+    encode_harmony(out_array, array_tracks)
+    encode_bass(out_array, array_tracks)
+    encode_drums(out_array, array_tracks)
+
     return out_array
 
 
 def process_to_file(filename):
     array_tracks = read_np_file(filename)
-    out_array = {'tracks': {}, 'meta': array_tracks['meta']}
-    out_array.append(encode_lead(array_tracks) + encode_harmony(array_tracks) + encode_bass(array_tracks)\
-                + encode_drums(array_tracks))
+    out_array = process_array(array_tracks)
 
     np.save(filename, sparse.csr_matrix(out_array))
+
+
+def read_np_file(filename):
+    np_arrays = np.load(filename)
+    np_arrays = {key: (np.asarray(value.todense()) if isinstance(value, sparse.csr.csr_matrix) else value)
+                 for (key, value) in np_arrays.tolist().items()}
+
+    return np_arrays
