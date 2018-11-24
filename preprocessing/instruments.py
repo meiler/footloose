@@ -3,8 +3,9 @@
 # manipulates and returns numpy files.
 
 import numpy as np
-import scipy
+from scipy import sparse
 from preprocessing.midi_encoder import read_np_file
+from preprocessing.midi_parser import encode_metadata
 
 
 """ Dictionary:
@@ -121,8 +122,9 @@ def encode_drums(array_tracks):  # hopefully finds out if there are multiple dru
 
     return out_array
 
-def write_np_file(filename, array_tracks):
-    read_np_file(filename)
-    out_array = encode_lead(array_tracks) + encode_harmony(array_tracks) + encode_bass(array_tracks) + encode_drums(array_tracks)
+def extract_instruments(filename):
+    array_tracks = read_np_file(filename)
+    out_array = encode_lead(array_tracks) + encode_harmony(array_tracks) + encode_bass(array_tracks)\
+                + encode_drums(array_tracks) + encode_metadata(array_tracks)
 
-    np.save(filename, out_array)
+    np.save(filename, sparse.csr_matrix(out_array))
