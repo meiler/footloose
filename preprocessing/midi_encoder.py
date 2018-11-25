@@ -8,7 +8,6 @@ The input tensor should contain: time (midi ticks) x pitch (127) x instruments
 """
 import numpy as np
 import mido
-#from .instruments import is_bass, is_harmony, is_lead
 from preprocessing.midi_parser import convert_midi_file
 from mido import Message, MidiFile, MidiTrack
 import scipy
@@ -30,8 +29,17 @@ def turn_on(track, note, time):
     track.append(Message('note_on', note=note, velocity=100, time=time))
 
 
-def get_track_from_array(array_track, tick_size=15, instrument=1):
+def set_program(track, channel, program):
+    if program is not None:
+        track.append(Message('program_change', channel=int(channel), program=int(program), time=0))
+    else:
+        track.append(Message('program_change', channel=int(channel), time=0))
+
+
+def get_track_from_array(array_track, tick_size, channel, program):
     mid_track = mido.MidiTrack()
+    set_program(mid_track, channel, program)
+
     state = np.zeros(128, dtype=np.int8)
     last_event = 0
 
@@ -56,20 +64,43 @@ def get_track_from_array(array_track, tick_size=15, instrument=1):
     return mid_track
 
 
-def convert_tensor_to_midi(array_tracks, filename):
-    mid = MidiFile()
+def get_midi_file_header(meta):
+    mid_track = mido.MidiTrack()
+    mid_track.append(mido.MetaMessage('midi_port', port=0, time=0))
+    mid_track.append(mido.MetaMessage('track_name', name='ladebandet', time=0))
+    mid_track.append(mido.MetaMessage('time_signature', numerator=4, denominator=4,
+                                      clocks_per_click=24, notated_32nd_notes_per_beat=meta['notated_32'],
+                                      time=0))
+    mid_track.append(mido.MetaMessage('set_tempo', tempo=meta['tempo'], time=0))
+    return mid_track
 
-    for channel in array_tracks:
-        mid_track = get_track_from_array(array_tracks[channel])
-        mid.tracks.append(mid_track)
+
+def unsparsify(np_arrays):
+    if isinstance(np_arrays['tracks'][0], scipy.sparse.csr_matrix):
+        np_arrays['tracks'] = {key: np.asarray(value.todense()) for (key, value) in np_arrays['tracks'].items()}
+
+
+def convert_tensor_to_midi(array_tracks, filename):
+    unsparsify(array_tracks)
+
+    mid = MidiFile()
+    tracks = array_tracks['tracks']
+    meta = array_tracks['meta']
+    tick_size = meta['tick_size']
+
+    mid.tracks.append(get_midi_file_header(meta))
+
+    for channel, track in tracks.items():
+        if channel is not None:
+            mid_track = get_track_from_array(track, tick_size, channel, meta['program'][channel])
+            mid.tracks.append(mid_track)
 
     mid.save(filename)
 
 
 def read_np_file(filename):
     np_arrays = np.load(filename)
-
-    np_arrays = {key: (np.asarray(value.todense()) if isinstance(value, scipy.sparse.csr.csr_matrix) else value)
-                 for (key, value) in np_arrays.tolist().items()}
+    np_arrays = np_arrays.tolist()
+    unsparsify(np_arrays)
 
     return np_arrays
