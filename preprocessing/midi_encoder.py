@@ -10,6 +10,7 @@ import numpy as np
 import mido
 from preprocessing.midi_parser import convert_midi_file
 from mido import Message, MidiFile, MidiTrack
+import scipy
 
 
 def get_off_notes(old_state, new_state):
@@ -74,7 +75,14 @@ def get_midi_file_header(meta):
     return mid_track
 
 
+def unsparsify(np_arrays):
+    if isinstance(np_arrays['tracks'][0], scipy.sparse.csr_matrix):
+        np_arrays['tracks'] = {key: np.asarray(value.todense()) for (key, value) in np_arrays['tracks'].items()}
+
+
 def convert_tensor_to_midi(array_tracks, filename):
+    unsparsify(array_tracks)
+
     mid = MidiFile()
     tracks = array_tracks['tracks']
     meta = array_tracks['meta']
@@ -92,8 +100,7 @@ def convert_tensor_to_midi(array_tracks, filename):
 
 def read_np_file(filename):
     np_arrays = np.load(filename)
-
     np_arrays = np_arrays.tolist()
-    np_arrays['tracks'] = {key: np.asarray(value.todense()) for (key, value) in np_arrays['tracks'].items()}
+    unsparsify(np_arrays)
 
     return np_arrays
