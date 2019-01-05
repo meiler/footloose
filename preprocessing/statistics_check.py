@@ -11,11 +11,13 @@ Created on Sat Jan  5 16:57:24 2019
 # Makes statistical analysis of instrument roles vs. original instrument chosen
 # =============================================================================
 
-import preprocessing.instruments as in
+import instruments as ins
+import numpy as np
+import matplotlib.pyplot as plt
 
 # example with 1 file
 
-npy_song = read_np_file('/Users/william/Projects/footloose/original/Guns_n_Roses_-_Sweet_Child_O_Mine.npy')
+npy_song = ins.read_np_file('/Users/william/Projects/footloose/original/Guns_n_Roses_-_Sweet_Child_O_Mine.npy')
 
 channel_instrument = npy_song['meta']['program']
 
@@ -24,18 +26,17 @@ songtracks = npy_song['tracks']
 print(songtracks[None])
 print(npy_song)
 
-def check_instruments(npy_song):
-    for track in song(npy_song):
-        if track is_lead():
-            channel_instrument_dic.append("lead")
-        if track is_bass():
-            dkkada
-        if track is_harmony():
-            dkaod
-        if track is_drums():
-            ofkad
+#def check_instruments(npy_song):
+#    for track in song(npy_song):
+#        if track is_lead():
+#            channel_instrument_dic.append("lead")
+#        if track is_bass():
+#            dkkada
+#        if track is_harmony():
+#            dkaod
+#        if track is_drums():
+#            ofkad
 
-import preprocessing.instruments as ins
 channel_role = {}
 
 for key in songtracks:
@@ -85,6 +86,11 @@ print(channel_instrument)
 
 
 
+drumtracks = 0
+leadtracks = 0
+basstracks = 0
+harmonytracks = 0
+
 # makes all 4 plots for 1 song (the drums is redundant)
 instrument_tags = ('Piano',
     'Chromatic Percussion',
@@ -108,21 +114,39 @@ values_bass = [0 for instrument in instrument_tags]
 values_drums = [0 for instrument in instrument_tags]
 values_lead = [0 for instrument in instrument_tags]
 
-x = np.arange(len(values))
+x = np.arange(len(instrument_tags))
 
 for channel in channel_role:
+    print("New instrument")
     print(channel_role[channel])
     instrumentnumber = channel_instrument[channel]
-    if channel_role[channel] == 'harmony':
-        #instument_name = intrument_tags[int((instrumentnumber+1)/8)]
-        values_harmony[int((instrumentnumber+1)/8)] += 1
-    elif channel_role[channel] == 'bass':
-        values_bass[int((instrumentnumber+1)/8)] += 1
+    if not instrumentnumber == 0:
+        instrument_cat = int((instrumentnumber)/8)
+    else:
+        instrument_cat = 0
+    
+    print(instrumentnumber)
+    print(instrument_cat)
+    print(instrument_tags[instrument_cat])
+    print("bassaxis "+str(any(songtracks[channel].sum(axis=1)>1 )))
+    print("bassaverage "+str(np.average(np.nonzero(songtracks[channel])[1])))
+    print(ins.is_bass(songtracks[channel]))
+    
+    if channel_role[channel] == 'bass':
+        values_bass[instrument_cat] += 1
+        basstracks += 1
+        
+    elif channel_role[channel] == 'harmony':
+        values_harmony[instrument_cat] += 1
+        harmonytracks += 1
+        
     elif channel_role[channel] == 'drums':
-        print(instrumentnumber)
-        values_drums[int((instrumentnumber+1)/8)] += 1
+        values_drums[instrument_cat] += 1
+        drumtracks += 1
+
     elif channel_role[channel] == 'lead':
-        values_lead[int((instrumentnumber+1)/8)] += 1
+        values_lead[instrument_cat] += 1
+        leadtracks += 1
 
 
 def plot(instrument,values):
@@ -139,6 +163,26 @@ plot('Lead',values_lead)
 plot('Drums',values_drums)
 plot('Bass',values_bass) #redundant
 
+
+def is_bass2(nptrack):
+    """ Checks if it only plays on pitch at a time and the average pitch is deep.
+    """
+    if any(nptrack.sum(axis=1) > 1):
+        print("anynptrack.sum fail")
+        return False
+    elif np.average(np.nonzero(nptrack)[1]) > 47:
+        print("npaverage fail")
+        print("npaverage was " + str(np.average(np.nonzero(nptrack)[0])))
+        return False  # if the average pitch is below 47, then it may be the bass
+    else:
+        return True
+
+###plot number of tracks vs. roles
+print("Number of Tracks:" + str(len(channel_instrument)))
+print("Number of Lead:" + str(leadtracks))
+print("Number of Bass:" + str(basstracks))
+print("Number of Harmony:" + str(harmonytracks))
+print("Number of Drums:" + str(drumtracks))
 
 # plot best
 
