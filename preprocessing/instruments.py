@@ -67,11 +67,8 @@ def is_bass(nptrack):
     """ Checks if it only plays on pitch at a time and the average pitch is deep.
     """
     if any(nptrack.sum(axis=1) > 1):
-        print("anynptrack.sum fail")
         return False
     elif np.average(np.nonzero(nptrack)[1]) > 47:
-        print("npaverage fail")
-        print("npaverage was " + str(np.average(np.nonzero(nptrack)[0])))
         return False  # if the average pitch is below 47, then it may be the bass
     else:
         return True
@@ -83,9 +80,10 @@ def encode_lead(out_array, array_tracks):  # finds the most likely lead track
         if is_lead(track):
             tracks.append(channel)
 
-    best_track = np.argmax([array_tracks['tracks'][track].sum() for track in tracks])
-    out_array['tracks'][0] = array_tracks['tracks'][best_track]
-    out_array['meta']['program'][0] = leadprogram
+    if tracks:
+        best_track = tracks[np.argmax([array_tracks['tracks'][track].sum() for track in tracks])]
+        out_array['tracks'][0] = array_tracks['tracks'][best_track]
+        out_array['meta']['program'][0] = leadprogram
 
 
 def encode_harmony(out_array, array_tracks):  # combines harmony tracks
@@ -106,7 +104,7 @@ def encode_bass(out_array, array_tracks):  # finds the most likely bass track
             tracks.append(channel)
 
     if tracks:
-        best_track = np.argmax([array_tracks['tracks'][track].sum() for track in tracks])
+        best_track = tracks[np.argmax([array_tracks['tracks'][track].sum() for track in tracks])]
         out_array['tracks'][0] = array_tracks['tracks'][best_track]
         out_array['meta']['program'][2] = bassprogram
 
@@ -131,16 +129,17 @@ def process_array(array_tracks):
     return out_array
 
 
-def process_to_file(filename):
-    array_tracks = read_np_file(filename)
+def process_to_file(in_file, out_file):
+    array_tracks = read_np_file(in_file)
     out_array = process_array(array_tracks)
 
-    np.save(filename, sparse.csr_matrix(out_array))
+    out_array['tracks'] = {key: sparse.csr_matrix(value) for (key, value) in out_array['tracks'].items()}
+    np.save(out_file, out_array)
 
 
 def read_np_file(filename):
-    np_arrays = np.load(filename)
-    np_arrays = {key: (np.asarray(value.todense()) if isinstance(value, sparse.csr.csr_matrix) else value)
-                 for (key, value) in np_arrays.tolist().items()}
+    np_arrays = np.load(filename).tolist()
+    np_arrays['tracks'] = {key: (np.asarray(value.todense()) if isinstance(value, sparse.csr.csr_matrix) else value)
+                 for (key, value) in np_arrays['tracks'].items()}
 
     return np_arrays
