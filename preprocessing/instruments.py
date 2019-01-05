@@ -66,10 +66,10 @@ def is_harmony(nptrack):
 def is_bass(nptrack):
     """ Checks if it only plays on pitch at a time and the average pitch is deep.
     """
-    if any(nptrack.sum(axis=1) > 1):
-        print("anynptrack.sum fail")
-        return False
-    elif np.average(np.nonzero(nptrack)[1]) > 47:
+#    if any(nptrack.sum(axis=1) > 1):
+#        print("anynptrack.sum fail")
+#        return False
+    if np.average(np.nonzero(nptrack)[1]) > 47:
         print("npaverage fail")
         print("npaverage was " + str(np.average(np.nonzero(nptrack)[0])))
         return False  # if the average pitch is below 47, then it may be the bass
