@@ -74,6 +74,59 @@ def is_bass(nptrack):
         return True
 
 
+def encode_test(out_array, array_tracks):
+    tracks = []
+    tracksum = []
+    for channel, track in array_tracks['tracks'].items():
+        if is_harmony(track):
+            tracks.append(channel)
+            tracksum.append(array_tracks['tracks'][channel].sum())
+
+    # sort tracks by values. track[0]=highest value.
+    print("tracks: " +str(tracks))
+    print("tracksum: " +str(tracksum))
+    sorted_tracks = [tracksum for _,tracksum in sorted(zip(tracksum,tracks), reverse=True)]
+    print("sorted tracks: " +str(sorted_tracks))
+
+    def returnarray(integer):
+        return array_tracks['tracks'][sorted_tracks[integer]]
+
+    # sort tracks by simultaneous notes.
+    instrument_present = [nodes for nodes in returnarray(0).sum(axis=1) if nodes > 0]
+
+    # harmonies = [nodes for nodes in instrument_present if nodes > 1]
+
+    # Her er jeg i gang med et wacky projekt der måske forbedrer kombination af tracks.
+    # Idéen er at kombinere den bedste med den værste og tjekke for overlap.
+    # Hvis der ikke er for meget overlap, gør vi det igen med den næste.
+    # Lige nu virker det ikke.
+    
+    for i in reversed(range(5)):
+        harmonies = [nodes for nodes in instrument_present if nodes > i]
+        if len(harmonies):
+            combined_2tracks = 0
+            print("Best candidate for harmony has a peak of " + str(i) + " simultaneous notes.")
+            for track in reversed(sorted_tracks[:1]):
+                if len(np.intersect1d(returnarray(track),returnarray(0))) < 10:
+                    combined_tracks = returnarray(track) + returnarray(0)
+                    print("Amount of intersections between best candidate and worst is " + str(len(np.intersect1d(returnarray(track),returnarray(0)))))
+                    print("Terminating loop. Peak amount of simultaneous notes is now: " + nodes for nodes in combined_tracks.sum(axis=1))
+                    return combined_tracks
+                elif len(np.intersect1d(returnarray(track),returnarray(1))) < 10:
+                    combined_tracks = returnarray(track) + returnarray(1)
+                    print("Amount of intersections between best candidate and second worst is " + str(len(np.intersect1d(returnarray(track),returnarray(1)))))
+                    print("Combining best with worst and second worst.")
+                    combined_2tracks = combined_tracks + returnarray(0)
+                    print("Peak amount of simultaneous notes is now: " + nodes for nodes in combined_2tracks.sum(axis=1))
+                    return combined_2tracks
+                elif len(np.intersect1d(returnarray(track),returnarray(1))) < 10:
+                    combined_2tracks = returnarray(track) + returnarray(1) + returnarray(0)
+                    combined_3tracks = combined_2tracks + returnarray(2)
+                    print("Amount of intersections between best candidate and second worst is " + str(len(np.intersect1d(combined_2tracks+returnarray(2)))))
+                    print("Peak amount of simultaneous notes is now: " + nodes for nodes in combined_3tracks.sum(axis=1))
+                    return combined_3tracks
+
+
 def encode_lead(out_array, array_tracks):  # finds the most likely lead track
     tracks = []
     for channel, track in array_tracks['tracks'].items():
@@ -85,7 +138,6 @@ def encode_lead(out_array, array_tracks):  # finds the most likely lead track
         out_array['tracks'][0] = array_tracks['tracks'][best_track]
         out_array['meta']['program'][0] = leadprogram
 
-
 def encode_harmony(out_array, array_tracks):  # combines harmony tracks
     tracks = []
     for channel, track in array_tracks['tracks'].items():
@@ -95,6 +147,17 @@ def encode_harmony(out_array, array_tracks):  # combines harmony tracks
     if tracks:
         out_array['tracks'][1] = sum([array_tracks['tracks'][track] for track in tracks])
         out_array['meta']['program'][1] = harmonyprogram
+
+
+#def encode_harmony(out_array, array_tracks):  # combines harmony tracks
+#    tracks = []
+#    for channel, track in array_tracks['tracks'].items():
+#        if is_harmony(track):
+#            tracks.append(channel)
+#
+#    if tracks:
+#        out_array['tracks'][1] = sum([array_tracks['tracks'][track] for track in tracks])
+#        out_array['meta']['program'][1] = harmonyprogram
 
 
 def encode_bass(out_array, array_tracks):  # finds the most likely bass track
