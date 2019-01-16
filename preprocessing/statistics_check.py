@@ -14,53 +14,45 @@ Created on Sat Jan  5 16:57:24 2019
 import instruments as ins
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
-# example with 1 file
+## example with 1 file
+#
+#npy_song = ins.read_np_file('/Users/william/Projects/footloose/original/Guns_n_Roses_-_Sweet_Child_O_Mine.npy')
+#
+#channel_instrument = npy_song['meta']['program']
+#
+#songtracks = npy_song['tracks']
+#
+##print(songtracks[None])
+##print(npy_song)
+#
+#
+#
+#channel_role = {}
+#
+#for key in songtracks:
+##    print(key)
+##    print(songtracks[key])
+#    track = songtracks[key]
+#    if not (key == None):
+#        
+#        if key == 9: #check if drums
+#            channel_role[key]='drums'
+#            #print(str(key)+'drum')
+#        elif ins.is_lead(track):
+#            #print(str(key)+'lead')
+#            channel_role[key]='lead'
+#        elif ins.is_bass(track):
+#            #print(str(key)+'bass')
+#            channel_role[key]='bass'
+#        elif ins.is_harmony(track):
+#            #print(str(key)+'harmony')
+#            channel_role[key]='harmony'
 
-npy_song = ins.read_np_file('/Users/william/Projects/footloose/original/Guns_n_Roses_-_Sweet_Child_O_Mine.npy')
+#print(channel_role)
 
-channel_instrument = npy_song['meta']['program']
-
-songtracks = npy_song['tracks']
-
-print(songtracks[None])
-print(npy_song)
-
-#def check_instruments(npy_song):
-#    for track in song(npy_song):
-#        if track is_lead():
-#            channel_instrument_dic.append("lead")
-#        if track is_bass():
-#            dkkada
-#        if track is_harmony():
-#            dkaod
-#        if track is_drums():
-#            ofkad
-
-channel_role = {}
-
-for key in songtracks:
-#    print(key)
-#    print(songtracks[key])
-    track = songtracks[key]
-    if not (key == None):
-        
-        if key == 9: #check if drums
-            channel_role[key]='drums'
-            print(str(key)+'drum')
-        elif ins.is_lead(track):
-            print(str(key)+'lead')
-            channel_role[key]='lead'
-        elif ins.is_bass(track):
-            print(str(key)+'bass')
-            channel_role[key]='bass'
-        elif ins.is_harmony(track):
-            print(str(key)+'harmony')
-            channel_role[key]='harmony'
-
-print(channel_role)
-
-print(channel_instrument)
+#print(channel_instrument)
 
 # plot all
 
@@ -116,38 +108,208 @@ values_lead = [0 for instrument in instrument_tags]
 
 x = np.arange(len(instrument_tags))
 
-for channel in channel_role:
-    print("New instrument")
-    print(channel_role[channel])
-    instrumentnumber = channel_instrument[channel]
-    if not instrumentnumber == 0:
-        instrument_cat = int((instrumentnumber)/8)
-    else:
-        instrument_cat = 0
-    
-    print(instrumentnumber)
-    print(instrument_cat)
-    print(instrument_tags[instrument_cat])
-    print("bassaxis "+str(any(songtracks[channel].sum(axis=1)>1 )))
-    print("bassaverage "+str(np.average(np.nonzero(songtracks[channel])[1])))
-    print(ins.is_bass(songtracks[channel]))
-    
-    if channel_role[channel] == 'bass':
-        values_bass[instrument_cat] += 1
-        basstracks += 1
-        
-    elif channel_role[channel] == 'harmony':
-        values_harmony[instrument_cat] += 1
-        harmonytracks += 1
-        
-    elif channel_role[channel] == 'drums':
-        values_drums[instrument_cat] += 1
-        drumtracks += 1
+#for channel in channel_role:
+#    #print("New instrument")
+#    #print(channel_role[channel])
+#    instrumentnumber = channel_instrument[channel]
+#    if not instrumentnumber == 0:
+#        instrument_cat = int((instrumentnumber)/8)
+#    else:
+#        instrument_cat = 0
+#    
+#    print(instrumentnumber)
+#    print(instrument_cat)
+#    print(instrument_tags[instrument_cat])
+#    print("bassaxis "+str(any(songtracks[channel].sum(axis=1)>1 )))
+#    print("bassaverage "+str(np.average(np.nonzero(songtracks[channel])[1])))
+#    print(ins.is_bass(songtracks[channel]))
+#    
+#    if channel_role[channel] == 'bass':
+#        values_bass[instrument_cat] += 1
+#        basstracks += 1
+#        
+#    elif channel_role[channel] == 'harmony':
+#        values_harmony[instrument_cat] += 1
+#        harmonytracks += 1
+#        
+#    elif channel_role[channel] == 'drums':
+#        values_drums[instrument_cat] += 1
+#        drumtracks += 1
+#
+#    elif channel_role[channel] == 'lead':
+#        values_lead[instrument_cat] += 1
+#        leadtracks += 1
 
-    elif channel_role[channel] == 'lead':
-        values_lead[instrument_cat] += 1
-        leadtracks += 1
 
+
+# =============================================================================
+# Plot many songs at the same time
+# =============================================================================
+
+
+# Make list of songs
+
+    
+folder_path = "/Users/william/Projects/footloose/midi_as_npy"
+addresses = [os.path.join(folder_path,file) for file in os.listdir(folder_path)]
+#address = '/Users/william/Projects/footloose/original/Guns_n_Roses_-_Sweet_Child_O_Mine.npy'
+
+
+#prepare the plot
+
+
+
+instrument_tags = ('Piano',
+    'Chromatic Percussion',
+    'Organ',
+    'Guitar',
+    'Bass',
+    'Strings',
+    'Ensemble',
+    'Brass',
+    'Reed',
+    'Pipe',
+    'Synth Lead',
+    'Synth Pad',
+    'Synth Effects',
+    'Ethnic',
+    'Percussive',
+    'Sound Effects'
+        )
+values_harmony = [0 for instrument in instrument_tags]
+values_bass = [0 for instrument in instrument_tags]
+values_drums = [0 for instrument in instrument_tags]
+values_lead = [0 for instrument in instrument_tags]
+
+
+# count all the things
+
+
+#totaltracks = [drumtracks, leadtracks, basstracks, harmonytracks]
+
+class trackcounter:
+    """
+    Keeps track of 4 numbers
+    """
+    def __init__(self):
+        self.drumtracks = 0
+        self.leadtracks = 0
+        self.basstracks = 0
+        self.harmonytracks = 0
+        
+    def incrementDrums(self):
+        self.drumtracks += 1
+    def incrementLead(self):
+        self.leadtracks += 1
+    def incrementBass(self):
+        self.basstracks += 1
+    def incrementHarmony(self):
+        self.harmonytracks += 1
+        
+totaltracks = trackcounter()    
+totaltracks.incrementDrums()
+print(totaltracks.drumtracks)
+    
+
+
+
+
+
+def count_original_instruments(address,values_harmony,values_bass,values_drums,values_lead,totaltracks):
+    #finds the tracks
+    npy_song = ins.read_np_file(address)
+    channel_instrument = npy_song['meta']['program']
+    songtracks = npy_song['tracks']
+    
+    #print(songtracks)
+
+    #Classifies the tracks into one of the categories (drums, leads, bass, harmony)
+    channel_role = {}
+    
+    for key in songtracks:
+        if songtracks[key].count_nonzero() == 0:
+#            print(songtracks[key].nnz)
+#            print(songtracks[key])
+#            print("here in the empty song place")
+            continue
+#        print(key)
+#        print("here")
+#        print(songtracks[key])
+#        print("and here")
+        track = songtracks[key]
+        if not (key == None):
+            
+            if key == 9: #check if drums
+                channel_role[key]='drums'
+                totaltracks.incrementDrums()
+                #print(str(key)+'drum')
+            elif ins.is_lead(track):
+                totaltracks.incrementLead()
+                #print(str(key)+'lead')
+                channel_role[key]='lead'
+            elif ins.is_bass(track):
+                totaltracks.incrementBass()
+                #print(str(key)+'bass')
+                channel_role[key]='bass'
+            elif ins.is_harmony(track):
+                totaltracks.incrementHarmony()
+                #print(str(key)+'harmony')
+                channel_role[key]='harmony'
+    
+    #counts
+    
+    for channel in channel_role:
+        if channel == None:
+            continue
+        #print("New instrument")
+        #print(channel_role[channel])
+        instrumentnumber = channel_instrument[channel]
+        bool_guy = not instrumentnumber == 0 and not instrumentnumber == None
+        if bool_guy:
+            #print(instrumentnumber)
+            instrument_cat = int((instrumentnumber)/8)
+        else:
+            instrument_cat = 0
+            
+        if channel_role[channel] == 'bass':
+            values_bass[instrument_cat] += 1
+            #basstracks += 1   
+        elif channel_role[channel] == 'harmony':
+            values_harmony[instrument_cat] += 1
+            #harmonytracks += 1
+            
+        elif channel_role[channel] == 'drums':
+            values_drums[instrument_cat] += 1
+            #drumtracks += 1
+    
+        elif channel_role[channel] == 'lead':
+            values_lead[instrument_cat] += 1
+            #leadtracks += 1
+        
+    return (values_harmony,values_bass,values_drums,values_lead,totaltracks)
+
+
+print("here")
+print(len(addresses))
+songnumber = 4
+#[songnumber:songnumber+2]
+i=0
+for address in addresses[200:400]:
+    count_original_instruments(address,values_harmony,values_bass,values_drums,values_lead,totaltracks)
+    #print("new")
+    if(i%20 == 0): print(str(i/2)+" procent")
+    i += 1
+
+#i = 0
+#for address in addresses[7:18]:
+#    print(i)
+#    count_original_instruments(address,values_harmony,values_bass,values_drums,values_lead,totaltracks)
+#    i += 1
+   
+
+# plots the graphs
+
+x = np.arange(len(instrument_tags))
 
 def plot(instrument,values):
     fig, ax = plt.subplots()
@@ -157,11 +319,17 @@ def plot(instrument,values):
     plt.xticks(x, instrument_tags, rotation='vertical')
     plt.show()
 
+print('Harmony ')
+print(values_harmony)
+print('Lead ')
+print(values_lead)
+print('Bass ')
+print(values_bass)
 
 plot('Harmony',values_harmony)
 plot('Lead',values_lead)
-plot('Drums',values_drums)
-plot('Bass',values_bass) #redundant
+#plot('Drums',values_drums) #redundant
+plot('Bass',values_bass) 
 
 
 def is_bass2(nptrack):
@@ -178,11 +346,13 @@ def is_bass2(nptrack):
         return True
 
 ###plot number of tracks vs. roles
-print("Number of Tracks:" + str(len(channel_instrument)))
-print("Number of Lead:" + str(leadtracks))
-print("Number of Bass:" + str(basstracks))
-print("Number of Harmony:" + str(harmonytracks))
-print("Number of Drums:" + str(drumtracks))
+print("Number of Lead:" + str(totaltracks.leadtracks))
+print("Number of Bass:" + str(totaltracks.basstracks))
+print("Number of Harmony:" + str(totaltracks.harmonytracks))
+print("Number of Drums:" + str(totaltracks.drumtracks))
+
+
+
 
 # plot best
 
