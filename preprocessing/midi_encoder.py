@@ -76,7 +76,7 @@ def get_midi_file_header(meta):
 
 
 def unsparsify(np_arrays):
-    if isinstance(np_arrays['tracks'][0], scipy.sparse.csr_matrix):
+    if np_arrays['tracks'] and isinstance(list(np_arrays['tracks'].values())[0], scipy.sparse.csr_matrix):
         np_arrays['tracks'] = {key: np.asarray(value.todense()) for (key, value) in np_arrays['tracks'].items()}
 
 
@@ -104,3 +104,7 @@ def read_np_file(filename):
     unsparsify(np_arrays)
 
     return np_arrays
+
+
+
+

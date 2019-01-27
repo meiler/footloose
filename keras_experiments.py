@@ -8,7 +8,7 @@ Created on Sat Nov 24 13:30:41 2018
 from keras.layers import Input, Conv2D, BatchNormalization, UpSampling2D, MaxPool2D
 from keras.models import Model
 import os
-from  preprocessing.midi_encoder import read_np_file
+from preprocessing.midi_encoder import read_np_file, unsparsify
 import numpy as np
 
 def _down_block(input_tensor, n_filt, filt_size=(4, 18), pool_size=(4, 4)):
@@ -56,8 +56,8 @@ model.compile(optimizer='adadelta', loss='binary_crossentropy')
 x_train = []
 
 # loads the files
-for filename in os.listdir('/Users/william/Projects/footloose/midi_as_np/'):
-    song_tracks = read_np_file('/Users/william/Projects/footloose/midi_as_np/'+filename)
+for filename in os.listdir('/Users/william/Projects/footloose/midi_as_npy/'):
+    song_tracks = read_np_file('/Users/william/Projects/footloose/midi_as_npy/'+filename)['tracks']
     if 9 in song_tracks:
         x_train.append(song_tracks[9])
             
@@ -70,25 +70,32 @@ for track in x_train:
     shape = track.shape
     if shape[0] < 3000:
         continue
+        
     x_train_reshaped.append(track[:3000, :].reshape(3000,shape[1],1))
 
 x_train_reshaped = np.array(x_train_reshaped)
 
 
 
-half = int(len(x_train_reshaped)-4)
+# half = int(len(x_train_reshaped)-4)
 
-train_set = x_train_reshaped[:half]
-test_set = x_train_reshaped[half:]
+# train_set = x_train_reshaped[:half]
+# test_set = x_train_reshaped[half:]
+
+# a quick subset
+train_set = x_train_reshaped[:1]
+test_set = x_train_reshaped[1:2]
+
 
 model.fit(train_set, train_set,
-                epochs=10,
-                batch_size=4,
+                epochs=1,
+                batch_size=1,
                 shuffle=True,
-                steps=2,
                 verbose=1,
                 validation_data=(test_set, test_set))
 
+
+model.summary()
 
 # =============================================================================
 # What I write to run the code
